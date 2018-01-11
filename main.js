@@ -17,7 +17,7 @@ const express = require('express'),
 
 app.use(helmet.hidePoweredBy({setTo: 'PHP/5.4.0'}));
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 80;
 
 app.use(express.static(__dirname + '/docs'));
 
