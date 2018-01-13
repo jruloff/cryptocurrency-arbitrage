@@ -201,42 +201,97 @@ let markets = [
 	},
 	
 	{
-
-        marketName: 'kraken', // kraken has no one size fits all market summery so each pair has to be entered as param in GET - will need to add new coins as they are added to exchange
-        URL: 'https://api.kraken.com/0/public/Ticker?pair=DASHXBT,EOSXBT,GNOXBT,ETCXBT,ETHXBT,ICNXBT,LTCXBT,MLNXBT,REPXBT,XDGXBT,XLMXBT,XMRXBT,XRPXBT,ZECXBT', //URL To Fetch API From.
-        toBTCURL: false, //URL, if needed for an external bitcoin price api.
-        pairURL : '',
-        last: function (data, coin_prices) { //Get the last price of coins in JSON data
-            return new Promise(function (res, rej) {
-                try {
-                    for (let key in data.result) {
-                        let arr = key.match(/DASH|EOS|GNO|ETC|ETH|ICN|LTC|MLN|REP|XDG|XLM|XMR|XRP|ZEC/); // matching real names to weird kraken api coin pairs like "XETCXXBT" etc 
-                        let name = key;
-                        let matchedName = arr[0];
-                        if (matchedName === "XDG") { //kraken calls DOGE "XDG" for whatever reason
-                            let matchedName = "DOGE";
-                            var coinName = matchedName;
-                        } else {
-                            var coinName = matchedName;
-                        }
-
-                        if (!coin_prices[coinName]) coin_prices[coinName] = {};
-                        
-                        coin_prices[coinName].kraken = data.result[name].c[0];
-
+    marketName: 'kraken', // kraken has no one size fits all market summery so each pair has to be entered as param in GET - will need to add new coins as they are added to exchange
+    URL: 'https://api.kraken.com/0/public/Ticker?pair=DASHXBT,EOSXBT,GNOXBT,ETCXBT,ETHXBT,ICNXBT,LTCXBT,MLNXBT,REPXBT,XDGXBT,XLMXBT,XMRXBT,XRPXBT,ZECXBT', //URL To Fetch API From.
+    toBTCURL: false, //URL, if needed for an external bitcoin price api.
+    pairURL : '',
+    last: function (data, coin_prices) { //Get the last price of coins in JSON data
+        return new Promise(function (res, rej) {
+            try {
+                for (let key in data.result) {
+                    let arr = key.match(/DASH|EOS|GNO|ETC|ETH|ICN|LTC|MLN|REP|XDG|XLM|XMR|XRP|ZEC/); // matching real names to weird kraken api coin pairs like "XETCXXBT" etc
+                    let name = key;
+                    let matchedName = arr[0];
+                    if (matchedName === "XDG") { //kraken calls DOGE "XDG" for whatever reason
+                        let matchedName = "DOGE";
+                        var coinName = matchedName;
+                    } else {
+                        var coinName = matchedName;
                     }
-                    res(coin_prices);
+
+                    if (!coin_prices[coinName]) coin_prices[coinName] = {};
+
+                    coin_prices[coinName].kraken = data.result[name].c[0];
 
                 }
-                catch (err) {
-                    console.log(err);
-                    rej(err);
-                }
+                res(coin_prices);
 
-            })
-        },
+            }
+            catch (err) {
+                console.log(err);
+                rej(err);
+            }
+
+        })
     },
+  },
 
+	{
+		marketName: 'kucoin', // kraken has no one size fits all market summery so each pair has to be entered as param in GET - will need to add new coins as they are added to exchange
+    URL: 'https://api.kucoin.com/v1/open/tick',
+		toBTCURL: false, //URL, if needed for an external bitcoin price api.
+		pairURL : '',
+		last: function (data, coin_prices) { //Get the last price of coins in JSON data
+			return new Promise(function (res, rej) {
+				try {
+					for (var i = 0; i < data.data.length; i++) {
+						var coinData = data.data[i];
+						if(coinData.coinTypePair == "BTC") {
+							if(coinData.coinType.includes("-BTC")) {	//sanity check
+								coinData.coinType = coinData.coinType.replace("-BTC", "");
+							}
+							if (!coin_prices[coinData.coinType]) coin_prices[coinData.coinType] = {};
+							coin_prices[coinData.coinType].kucoin = coinData.lastDealPrice;
+						}
+					}
+					res(coin_prices);
+				}
+				catch (err) {
+					console.log(err);
+					rej(err);
+				}
+
+			})
+		},
+	},
+	{
+		marketName: 'binance', // kraken has no one size fits all market summery so each pair has to be entered as param in GET - will need to add new coins as they are added to exchange
+		URL: 'https://api.binance.com/api/v1/ticker/allPrices',
+		toBTCURL: false, //URL, if needed for an external bitcoin price api.
+		pairURL : '',
+		last: function (data, coin_prices) { //Get the last price of coins in JSON data
+			return new Promise(function (res, rej) {
+				try {
+					for (var i = 0; i < data.length; i++) {
+						if (data[i].symbol.includes("BTC")) {
+							if (data[i].symbol.indexOf("BTC") > 0) {
+								data[i].symbol = data[i].symbol.replace("BTC", "");
+								console.log(data[i].symbol + ": " + data[i].price);
+								if (!coin_prices[data[i].symbol]) coin_prices[data[i].symbol] = {};
+								coin_prices[data[i].symbol].binance = data[i].price;
+							}
+						}
+					}
+					res(coin_prices);
+				}
+				catch (err) {
+					console.log(err);
+					rej(err);
+				}
+
+			})
+		},
+	},
 ];
 
 let marketNames = [];
